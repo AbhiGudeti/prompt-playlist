@@ -1,6 +1,6 @@
-require('dotenv').config();
+// require('dotenv').config();
 
-const RecommendationService = require('./services/recommendation');
+// const RecommendationService = require('./services/recommendation');
 
 async function testRecommendation() {
   const recommender = new RecommendationService();

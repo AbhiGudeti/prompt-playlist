@@ -1,5 +1,5 @@
-require('dotenv').config();
-const GeminiService = require('./services/gemini');
+// require('dotenv').config();
+// const GeminiService = require('./services/gemini');
 
 async function testGemini() {
   const gemini = new GeminiService();

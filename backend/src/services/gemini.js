@@ -2,7 +2,9 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 class GeminiService {
   constructor() {
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const key = process.env.GEMINI_API_KEY;
+    console.log('Using Gemini key:', key?.slice(0, 10));
+    this.genAI = new GoogleGenerativeAI(key);
   }
 
   async getKeywords(userInput) {
