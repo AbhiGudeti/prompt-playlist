@@ -25,12 +25,27 @@ class SpotifyService {
    return response.body.tracks.items;
  }
 
- async createPlaylist(userId, tracks, name) {
+ async createPlaylist(tracks) {
    await this.initializeToken();
-   const playlist = await this.api.createPlaylist(userId, name, { public: true });
-   await this.api.addTracksToPlaylist(playlist.body.id, tracks);
-   return playlist.body.external_urls.spotify;
+
+   const playlist = await this.api.createPlaylist('Your Curated Playlist!', {
+    description: 'Generated playlist based on your preferences!',
+    public: true
+   });
+
+   const trackUris = tracks.map(track => track.uri);
+   await this.api.addTracksToPlaylist(playlist.body.id, trackUris);
+
+   return {
+    playlistId: playlist.body.id,
+    url: playlist.body.external_urls.spotify
+   };
  }
+
+ authorize() {  // Remove async
+  const scopes = ['playlist-modify-public', 'user-read-private'];
+  return this.api.createAuthorizeURL(scopes, 'state');
+}
 }
 
 module.exports = SpotifyService;
