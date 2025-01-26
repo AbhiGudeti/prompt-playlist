@@ -11,18 +11,12 @@ class RecommendationService {
       }
   
       async generatePlaylist(userInput) {
-        try {
-          const keywords = await this.gemini.getKeywords(userInput);
-          console.log('Keywords received:', keywords);
-          const searchQuery = this.buildSearchQuery(keywords);
-          console.log('Search query:', searchQuery);
-          const tracks = await this.spotify.searchTracks(searchQuery);
-          const playlistUrl = await this.spotify.createPlaylist(tracks);
-          return playlistUrl;
-        } catch (error) {
-          console.error('Recommendation error:', error);
-          throw error;
-        }
+        const keywords = await this.gemini.getKeywords(userInput);
+        const searchQuery = this.buildSearchQuery(keywords);
+        const tracks = await this.spotify.searchTracks(searchQuery);
+        const playlist = await this.spotify.createPlaylist(tracks);
+
+        return { playlist, keywords };
       }
   
     buildSearchQuery(keywords) {
