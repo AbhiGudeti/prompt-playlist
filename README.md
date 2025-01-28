@@ -7,7 +7,6 @@ Generate Spotify playlists using natural language prompts.
 Before setting up the project, ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/) and npm
-- [PostgreSQL](https://www.postgresql.org/)
 - [Spotify Developer Account](https://developer.spotify.com/dashboard)
 - [Google AI Studio Account (Gemini API)](https://makersuite.google.com/app/apikey)
 
