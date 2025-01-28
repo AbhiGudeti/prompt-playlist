@@ -19,15 +19,15 @@ setTimeout(() => {
  });
 
  app.get('/callback', async (req, res) => {
-   try {
-     const { code } = req.query;
-     await spotify.handleCallback(code);
-     res.redirect('/');
-   } catch (error) {
-     console.error('Callback error:', error);
-     res.status(500).send(error.message);
-   }
- });
+  try {
+    const { code } = req.query;
+    await spotify.handleCallback(code);
+    res.redirect('http://localhost:8888');
+  } catch (error) {
+    console.error('Callback error:', error);
+    res.status(500).send(error.message);
+  }
+});
 
  app.get('/', (_req, res) => {
    res.send('Successfully authenticated with Spotify! You can close this window.');
