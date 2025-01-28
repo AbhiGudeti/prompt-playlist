@@ -19,36 +19,28 @@ class RecommendationService {
   return artistQuery;
 }
 
- async generatePlaylist(userInput) {
-   try {
-     const keywords = await this.gemini.getKeywords(userInput);
-     console.log('Keywords received:', keywords);
-
-     let tracks = [];
-
-     // Try artist search first
-     const artistQuery = this.buildSearchQuery(keywords);
-     tracks = await this.spotify.searchTracks(artistQuery);
-
-     // If no results, try genre search
-     if (tracks.length === 0) {
-       const genreQuery = keywords.genres[0];
-       tracks = await this.spotify.searchTracks(genreQuery);
-     }
-
-     if (tracks.length === 0) {
-       throw new Error('No tracks found matching the criteria');
-     }
-
-     // Shuffle and limit tracks
-     const shuffledTracks = tracks.sort(() => Math.random() - 0.5).slice(0, 20);
-     const playlist = await this.spotify.createPlaylist(shuffledTracks);
-
-     return { playlist, keywords };
-   } catch (error) {
-     console.error('Recommendation error:', error);
-     throw error;
-   }
+async generatePlaylist(userInput) {
+  try {
+    const keywords = await this.gemini.getKeywords(userInput);
+    console.log('Keywords received:', keywords);
+    
+    const artistQuery = this.buildSearchQuery(keywords);
+    let tracks = await this.spotify.searchTracks(artistQuery);
+    
+    // Remove duplicates based on track ID
+    const uniqueTracks = [...new Map(tracks.map(track => [track.id, track])).values()];
+    
+    // Shuffle and limit
+    const shuffledTracks = uniqueTracks
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 20);
+      
+    const playlist = await this.spotify.createPlaylist(shuffledTracks);
+    return { playlist, keywords };
+  } catch (error) {
+    console.error('Recommendation error:', error);
+    throw error;
+  }
  }
 }
 
