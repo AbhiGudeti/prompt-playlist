@@ -25,7 +25,9 @@ class SpotifyService {
   try {
     await this.initializeToken();
     console.log('Search query sent to Spotify:', query);
-    const results = await this.api.searchTracks(query);
+    // Increase limit to 50
+    const results = await this.api.searchTracks(query, { limit: 50 });
+    console.log('Tracks found:', results.body.tracks.items.length);
     return results.body.tracks.items;
   } catch (error) {
     console.error('Search error:', error);

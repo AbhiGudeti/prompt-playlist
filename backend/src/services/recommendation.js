@@ -11,37 +11,40 @@ class RecommendationService {
  }
 
  buildSearchQuery(keywords) {
-  // Quote each artist name and combine with OR
-  const artistQuery = keywords.similar_artists
+  const artistQueries = keywords.similar_artists
+    .slice(0, 20)  // Increase to 20 artists
     .map(artist => `"${artist}"`)
     .join(' OR ');
-  
-  return artistQuery;
+  return artistQueries;
 }
 
 async generatePlaylist(userInput) {
   try {
     const keywords = await this.gemini.getKeywords(userInput);
-    console.log('Keywords received:', keywords);
-    
     const artistQuery = this.buildSearchQuery(keywords);
     let tracks = await this.spotify.searchTracks(artistQuery);
     
-    // Remove duplicates based on track ID
-    const uniqueTracks = [...new Map(tracks.map(track => [track.id, track])).values()];
-    
-    // Shuffle and limit
-    const shuffledTracks = uniqueTracks
+    // Group by artist and limit each to 5 songs
+    const tracksByArtist = tracks.reduce((acc, track) => {
+      const artistId = track.artists[0].id;
+      if (!acc[artistId]) acc[artistId] = [];
+      if (acc[artistId].length < 5) acc[artistId].push(track);
+      return acc;
+    }, {});
+
+    // Flatten and shuffle
+    const limitedTracks = Object.values(tracksByArtist)
+      .flat()
       .sort(() => Math.random() - 0.5)
-      .slice(0, 20);
-      
-    const playlist = await this.spotify.createPlaylist(shuffledTracks);
+      .slice(0, 100);
+
+    const playlist = await this.spotify.createPlaylist(limitedTracks);
     return { playlist, keywords };
   } catch (error) {
     console.error('Recommendation error:', error);
     throw error;
   }
- }
+}
 }
 
 module.exports = RecommendationService;
