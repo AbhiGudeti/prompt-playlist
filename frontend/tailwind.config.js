@@ -7,12 +7,16 @@ module.exports = {
           sans: ['Circular', 'system-ui', 'sans-serif'],
         },
         colors: {
-          spotify: {
-            brown: '#3E2723',
-            lightBrown: '#4E342E', 
-            accent: '#8D6E63',
-            hover: '#795548'
-          }
+        spotify: {
+          green: '#1DB954',
+          greenHover: '#1ed760',
+          black: '#191414',
+          dark: '#121212',
+          darkElevated: '#181818',
+          card: '#282828',
+          text: '#FFFFFF',
+          subtext: '#B3B3B3'
+        }
         }
       },
     },

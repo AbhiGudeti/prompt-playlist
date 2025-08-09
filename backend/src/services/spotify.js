@@ -35,6 +35,18 @@ class SpotifyService {
   }
 }
 
+  async searchTracksByArtist(artistName, limit = 10, market = 'US') {
+    try {
+      await this.initializeToken();
+      const query = `artist:"${artistName}"`;
+      const results = await this.api.searchTracks(query, { limit, market });
+      return results.body.tracks.items;
+    } catch (error) {
+      console.error(`Search by artist error (${artistName}):`, error);
+      throw error;
+    }
+  }
+
  async createPlaylist(tracks) {
    if (!tracks || tracks.length === 0) {
      throw new Error('No tracks provided');
@@ -47,14 +59,25 @@ class SpotifyService {
    try {
      this.api.setAccessToken(userAccessToken);
      const me = await this.api.getMe();
-     const playlist = await this.api.createPlaylist(me.body.id, {
-       name: "Generated Playlist",
-       description: 'Created by PromptPlaylist'
-     });
+      const playlist = await this.api.createPlaylist(
+        "Generated Playlist",
+        {
+          description: 'Created by PromptPlaylist',
+          public: true,
+          collaborative: false,
+        }
+      );
      
      const uris = tracks.map(track => track.uri);
-     await this.api.addTracksToPlaylist(playlist.body.id, uris);
-     return playlist.body.external_urls.spotify;
+      await this.api.addTracksToPlaylist(playlist.body.id, uris);
+      // Fetch fresh data to ensure public URL is available
+      const playlistFull = await this.api.getPlaylist(playlist.body.id);
+      return {
+        id: playlistFull.body.id,
+        url: playlistFull.body.external_urls.spotify,
+        name: playlistFull.body.name,
+        public: playlistFull.body.public,
+      };
    } catch (error) {
      console.error('Create playlist error:', error);
      throw error;

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 function PlaylistGenerator() {
     const [input, setInput] = useState('');
     const [playlist, setPlaylist] = useState(null);
+    const [embedError, setEmbedError] = useState(false);
     const [loading, setLoading] = useState(false);
     const [genres, setGenres] = useState([]);
 
@@ -16,6 +17,7 @@ function PlaylistGenerator() {
             });
             const data = await response.json();
             if (data.success) {
+                setEmbedError(false);
                 setPlaylist(data.playlist);
                 setGenres(data.genres || []);
             }
@@ -26,50 +28,97 @@ function PlaylistGenerator() {
     };
 
     return (
-        <div className="min-h-screen bg-sky-400 flex items-center justify-center p-8">
-            <div className="w-full max-w-xl bg-white/20 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
-                <h1 className="text-6xl font-bold text-white text-center mb-12 font-sans">
-                    PromptPlaylist
-                </h1>
-                <div className="space-y-6 flex flex-col items-center">
+        <div className="min-h-screen bg-spotify-dark text-spotify-text">
+            <header className="px-8 py-6 border-b border-white/10 bg-spotify-black">
+                <h1 className="text-3xl font-bold">PromptPlaylist</h1>
+            </header>
+            <main className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6 p-6 md:p-8">
+                {/* Left: Prompt Panel */}
+                <section className="bg-spotify-darkElevated rounded-xl p-6 md:sticky md:top-6 h-fit">
+                    <h2 className="text-xl font-semibold mb-4">Describe the vibe</h2>
                     <textarea
-                        className="w-full p-6 bg-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 font-sans text-lg"
+                        className="w-full p-4 bg-spotify-card rounded-lg text-spotify-text placeholder-spotify-subtext focus:outline-none focus:ring-2 focus:ring-spotify-green font-sans text-base min-h-[140px]"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Describe the music you want to hear..."
-                        rows="4"
+                        placeholder="e.g., Lo-fi beats for studying, like Nujabes and Bonobo"
+                        rows="5"
                     />
+
                     {genres.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 mt-4">
                             {genres.map((genre, idx) => (
-                                <span 
+                                <span
                                     key={idx}
-                                    className="px-3 py-1 bg-white/30 rounded-full text-white text-sm"
+                                    className="px-3 py-1 bg-spotify-card rounded-full text-spotify-subtext text-sm"
                                 >
                                     {genre}
                                 </span>
                             ))}
                         </div>
                     )}
+
                     <button
                         onClick={generatePlaylist}
                         disabled={loading}
-                        className="px-8 py-4 bg-white/30 hover:bg-white/40 rounded-xl font-bold text-white transition-colors text-lg w-48"
+                        className="mt-6 px-6 py-3 bg-spotify-green hover:bg-spotify-greenHover disabled:opacity-60 disabled:cursor-not-allowed rounded-full font-bold text-spotify-black transition-colors text-base"
                     >
                         {loading ? 'Generating...' : 'Generate'}
                     </button>
-                    {playlist && (
-                        // eslint-disable-next-line jsx-a11y/iframe-has-title
-                        <iframe
-                            src={`https://open.spotify.com/embed/playlist/${playlist.split('/').pop()}`}
-                            className="w-full h-[450px] rounded-xl mt-8"
-                            frameBorder="0"
-                            allowtransparency="true"
-                            allow="encrypted-media"
-                        />
+                </section>
+
+                {/* Right: Playlist Panel */}
+                <section className="bg-spotify-darkElevated rounded-xl p-6 min-h-[300px]">
+                    <h2 className="text-xl font-semibold mb-4">Your playlist</h2>
+                    {!playlist && (
+                        <div className="text-spotify-subtext">Your generated Spotify playlist will appear here.</div>
                     )}
-                </div>
-            </div>
+                    {playlist && (
+                        <div>
+                            {(() => {
+                                let playlistId = playlist.id;
+                                if (!playlistId && playlist.url) {
+                                    try {
+                                        const u = new URL(playlist.url);
+                                        const parts = u.pathname.split('/');
+                                        playlistId = parts[parts.length - 1];
+                                    } catch (_) {
+                                        // ignore
+                                    }
+                                }
+                                const embedSrc = playlistId
+                                    ? `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`
+                                    : null;
+                                return (
+                                    <>
+                                        {!embedError && embedSrc && (
+                                            <iframe
+                                                key={playlistId}
+                                                title="Spotify playlist"
+                                                src={embedSrc}
+                                                className="w-full h-[500px] rounded-lg"
+                                                frameBorder="0"
+                                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                                loading="lazy"
+                                                onError={() => setEmbedError(true)}
+                                            />
+                                        )}
+                                        {(!embedSrc || embedError) && (
+                                            <a
+                                                href={playlist.url || (typeof playlist === 'string' ? playlist : '#')}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-block mt-4 px-5 py-3 bg-spotify-green hover:bg-spotify-greenHover rounded-full font-bold text-spotify-black"
+                                            >
+                                                Open in Spotify
+                                            </a>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    )}
+                </section>
+            </main>
         </div>
     );
 }

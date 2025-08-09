@@ -21,24 +21,36 @@ class RecommendationService {
 async generatePlaylist(userInput) {
   try {
     const keywords = await this.gemini.getKeywords(userInput);
-    const artistQuery = this.buildSearchQuery(keywords);
-    let tracks = await this.spotify.searchTracks(artistQuery);
-    
-    // Group by artist and limit each to 5 songs
-    const tracksByArtist = tracks.reduce((acc, track) => {
-      const artistId = track.artists[0].id;
-      if (!acc[artistId]) acc[artistId] = [];
-      if (acc[artistId].length < 5) acc[artistId].push(track);
-      return acc;
-    }, {});
+      const artistNames = keywords.similar_artists.slice(0, 20);
 
-    // Flatten and shuffle
-    const limitedTracks = Object.values(tracksByArtist)
-      .flat()
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 100);
+      // Fetch up to 10 tracks per artist and interleave for variety
+      const perArtistTracks = await Promise.all(
+        artistNames.map(name => this.spotify.searchTracksByArtist(name, 10))
+      );
 
-    const playlist = await this.spotify.createPlaylist(limitedTracks);
+      // Interleave tracks to avoid clustering by artist
+      const interleaved = [];
+      const maxLen = Math.max(...perArtistTracks.map(list => list.length));
+      for (let i = 0; i < maxLen; i++) {
+        for (const list of perArtistTracks) {
+          if (list[i]) interleaved.push(list[i]);
+        }
+      }
+
+      // Limit per-artist to 5 to keep balance, then cap total to 100
+      const seenPerArtist = new Map();
+      const balanced = [];
+      for (const track of interleaved) {
+        const artistId = track.artists[0]?.id ?? track.artists[0];
+        const count = seenPerArtist.get(artistId) || 0;
+        if (count < 5) {
+          seenPerArtist.set(artistId, count + 1);
+          balanced.push(track);
+        }
+        if (balanced.length >= 100) break;
+      }
+
+      const playlist = await this.spotify.createPlaylist(balanced);
     return { playlist, keywords };
   } catch (error) {
     console.error('Recommendation error:', error);

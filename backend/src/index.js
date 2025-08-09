@@ -22,7 +22,7 @@ setTimeout(() => {
   try {
     const { code } = req.query;
     await spotify.handleCallback(code);
-    res.redirect('http://localhost:8888');
+    res.redirect('http://localhost:8888/');
   } catch (error) {
     console.error('Callback error:', error);
     res.status(500).send(error.message);
